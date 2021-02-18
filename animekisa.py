@@ -25,11 +25,11 @@ if(len(sys.argv)>0):
 #----------------------------------------------------------------------------------#
 def genList(size,start,befor,after):
 	tempList=[]
-	if start>0 and befor != "":
+	if start>0 and befor != None:
 		tempList.append(str(befor))
 	for x in range(size):
 		tempList.append(str(x+start))
-	if after != "":
+	if after != None:
 		tempList.append(str(after))
 	return tempList
 
@@ -110,7 +110,10 @@ for index in episodes:
 # use dmenu here instead to select the episode
 selectedEpisode=episode[0]
 if episodeSelect == True:
-	selectedEpisode=genList(episode[0],episode[len(episode)],"","")
+	(menuSize,pagesIndex,less,more)
+	firstEpisode = 1
+	options=genList(int(episode[0]),firstEpisode,None,None)
+	selectedEpisode = dmenu.show(options)
 
 ## scan anime kisa for download link
 url="https://animekisa.tv/"+str(choice)+"-episode-"+str(selectedEpisode)
@@ -126,6 +129,7 @@ jss = str(js[index]).split(';')
 for lines in jss:
 	if "var VidStreaming = " in lines:
 		VidStreaming = str(lines).split('"')
+print(VidStreaming)
 
 ## scan download page for download
 # example "https://gogo-play.net/load.php?id=MTUyNTE4&title=Beastars+2nd+Season&typesub=SUB&sub=&cover=Y292ZXIvYmVhc3RhcnMtMm5kLXNlYXNvbi5wbmc="
