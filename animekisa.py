@@ -1,15 +1,63 @@
+#!/usr/bin/env python3
 # importing the libraries
 from bs4 import BeautifulSoup
 import requests
 import os
 import webbrowser
-#import dmenu
+import dmenu
+import sys
 
+#----------------------------------------------------------------------------------#
+# ARGUMENTS                                                                        #
+#----------------------------------------------------------------------------------#
+pageSelect=False
+episodeSelect=False;
+if(len(sys.argv)>0):
+	for i in range(len(sys.argv)):
+		arg = str(sys.argv[i])
+		if arg == "-p":
+			pageSelect=True;
+		if arg == "-e":
+			episodeSelect=True;
+
+#----------------------------------------------------------------------------------#
+# FUNCTIONS                                                                        #
+#----------------------------------------------------------------------------------#
+def genList(size,start,befor,after):
+	tempList=[]
+	if start>0 and befor != "":
+		tempList.append(str(befor))
+	for x in range(size):
+		tempList.append(str(x+start))
+	if after != "":
+		tempList.append(str(after))
+	return tempList
+
+#----------------------------------------------------------------------------------#
+# Optional                                                                         #
+#----------------------------------------------------------------------------------#
+page=0
+if pageSelect == True:
+	pagesIndex=0
+	loop=True
+	menuSize=6
+	more=">"
+	less="<"
+	while loop==True:
+		options=genList(menuSize,pagesIndex,less,more)
+		choice = dmenu.show(options)
+		if str(choice) == less:
+			pagesIndex-=menuSize
+		elif str(choice) == more:
+			pagesIndex+=menuSize
+		else: 
+			loop=False
+			page=int(choice)
+
+#----------------------------------------------------------------------------------#
+# SCAN                                                                             #
+#----------------------------------------------------------------------------------#
 ## scan anime kisa for new anime
-try:
-	page=int(input("page: "))
-except:
-	page=0
 url="https://animekisa.tv/latest/"+str(page)
 html_content = requests.get(url).text
 frontPage = BeautifulSoup(html_content, "lxml")
@@ -26,18 +74,21 @@ for index in animes:
 	if name != last and "episode-" not in name:
 		last = name
 		#temporary until dmenu
-		print(" "+str(nEpisode)+": "+name)
+		#print(" "+str(nEpisode)+": "+name)
 		nEpisode+=1
 		names.append(name)
 	n+=1
-# use dmenu here instead to select the anime
-try:
-	serie=int(input("anime: "))
-except :
-	serie=0
 
+#----------------------------------------------------------------------------------#
+# OPTIONS                                                                          #
+#----------------------------------------------------------------------------------#
+choice = dmenu.show(names)
+
+#----------------------------------------------------------------------------------#
+# SCAN                                                                             #
+#----------------------------------------------------------------------------------#
 ## scan anime kisa for available anime episode
-url="https://animekisa.tv/"+str(names[serie])
+url="https://animekisa.tv/"+str(choice)
 html_content = requests.get(url).text
 animePage = BeautifulSoup(html_content, "lxml")
 links = animePage.find_all("div", {"class": "centerv"})
@@ -53,16 +104,16 @@ for index in episodes:
 		if isIndex != '':
 			episode.append(isIndex)
 
+#----------------------------------------------------------------------------------#
+# Optional                                                                         #
+#----------------------------------------------------------------------------------#
 # use dmenu here instead to select the episode
-print("total episodes: "+episode[0])
-maxEpisode = int(episode[0])
-selectedEpisode = int(input("epidode: "))
-while selectedEpisode > maxEpisode or maxEpisode<0:
-	print("please enter a valide episode number.")
-	selectedEpisode = input("epidode: ")
+selectedEpisode=episode[0]
+if episodeSelect == True:
+	selectedEpisode=genList(episode[0],episode[len(episode)],"","")
 
 ## scan anime kisa for download link
-url="https://animekisa.tv/"+str(names[serie])+"-episode-"+str(selectedEpisode)
+url="https://animekisa.tv/"+str(choice)+"-episode-"+str(selectedEpisode)
 html_content = requests.get(url).text
 
 # Parse the html content
