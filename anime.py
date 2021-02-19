@@ -61,8 +61,8 @@ if pageSelect == True:
 #----------------------------------------------------------------------------------#
 # SCAN                                                                             #
 #----------------------------------------------------------------------------------#
-## scan anime kisa for new anime
-url="https://animekisa.tv/latest/"+str(page)
+## scan ? anime site for new anime
+url="https://?.?/latest/"+str(page)
 html_content = requests.get(url).text
 frontPage = BeautifulSoup(html_content, "lxml")
 links = frontPage.find_all("a", {"class": "an"})
@@ -91,8 +91,8 @@ choice = dmenu.show(names, prompt='select anime')
 #----------------------------------------------------------------------------------#
 # SCAN                                                                             #
 #----------------------------------------------------------------------------------#
-## scan anime kisa for available anime episode
-url="https://animekisa.tv/"+str(choice)
+## scan ? anime site for available anime episode
+url="https://?.?/"+str(choice)
 html_content = requests.get(url).text
 animePage = BeautifulSoup(html_content, "lxml")
 links = animePage.find_all("div", {"class": "centerv"})
@@ -119,8 +119,8 @@ if episodeSelect == True:
 	options=genList(int(episode[0]),firstEpisode,None,None)
 	selectedEpisode = dmenu.show(options, prompt='select episode')
 
-## scan anime kisa for download link
-url="https://animekisa.tv/"+str(choice)+"-episode-"+str(selectedEpisode)
+## scan ? anime site for download link
+url="https://?.?/"+str(choice)+"-episode-"+str(selectedEpisode)
 html_content = requests.get(url).text
 
 # Parse the html content
