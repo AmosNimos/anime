@@ -179,7 +179,7 @@ if download==True:
 	#open(videoFile+videoName+'.mp4', 'wb').write(myfile.content)
 	#wget.download(url, videoFile+videoName+'.mp4')
 	# example https://gogo-play.net/download?id=MTUwMzA3&title=Tatoeba+Last+Dungeon+Mae+no+Mura+no+Shounen+ga+Joban+no+Machi+de+Kurasu+Youna+Monogatari&typesub=SUB
-	webbrowser.open(str(url))
+webbrowser.open(str(url))
 
 ## scan downlink for actual download link
 
