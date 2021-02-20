@@ -114,7 +114,7 @@ for index in episodes:
 # use dmenu here instead to select the episode
 selectedEpisode=episode[0]
 if episodeSelect == True:
-	(menuSize,pagesIndex,less,more)
+	#(menuSize,pagesIndex,less,more)
 	firstEpisode = 1
 	options=genList(int(episode[0]),firstEpisode,None,None)
 	selectedEpisode = dmenu.show(options, prompt='select episode')
