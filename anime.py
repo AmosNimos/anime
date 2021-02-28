@@ -7,23 +7,30 @@ import webbrowser
 import dmenu
 import sys
 import wget
+import datetime
 
 #----------------------------------------------------------------------------------#
 # ARGUMENTS                                                                        #
 #----------------------------------------------------------------------------------#
 pageSelect=False
-episodeSelect=False;
+episodeSelect=True;
 download=False;
 if(len(sys.argv)>0):
 	for i in range(len(sys.argv)):
 		arg = str(sys.argv[i])
 		if arg == "-p":
 			pageSelect=True
-		if arg == "-e":
-			episodeSelect=True
-		if arg == "-d":
-			download=True
+		if arg == "-l":
+			#auto select last episode
+			episodeSelect=False
 
+entry = dmenu.show(["Download","Stream"])
+if entry == "Download":
+	download=True
+elif entry == "Stream":
+	download=False
+else:
+	exit()
 #----------------------------------------------------------------------------------#
 # FUNCTIONS                                                                        #
 #----------------------------------------------------------------------------------#
@@ -61,9 +68,31 @@ if pageSelect == True:
 #----------------------------------------------------------------------------------#
 # SCAN                                                                             #
 #----------------------------------------------------------------------------------#
-## scan ? anime site for new anime
-url="https://?.?/latest/"+str(page)
-html_content = requests.get(url).text
+## scan anime kisa for new anime
+url="https://animekisa.tv/latest/"+str(page)
+
+#check if page alredy loaded
+if(page==0):
+	date = datetime.datetime.now()
+	now = date.strftime("%d")+'-'+date.strftime("%w")
+	html = open(os.path.join(sys.path[0], "data/date.txt"), "r")
+	lastDate = html.readline()
+	if lastDate != now:
+		html.close()
+		html = open(os.path.join(sys.path[0], "data/date.txt"), "w")
+		html.write(now)
+		html.close()
+		html_content = requests.get(url).text
+		html = open(os.path.join(sys.path[0], "data/animekisa.html"), "w")
+		html.write(html_content)
+		html.close()
+	else:
+		html = open(os.path.join(sys.path[0], "data/animekisa.html"), "r")
+		html_content=html.read()
+		html.close()
+else :
+	html_content = requests.get(url).text
+
 frontPage = BeautifulSoup(html_content, "lxml")
 links = frontPage.find_all("a", {"class": "an"})
 animes = str(links).split('href="/')
@@ -72,6 +101,7 @@ n=0
 nEpisode=0
 last=""
 names=[]
+
 #store anime name in a list
 for index in animes:
 	name = str(animes[n]).split('"', 1)[0]
@@ -86,16 +116,51 @@ for index in animes:
 #----------------------------------------------------------------------------------#
 # OPTIONS                                                                          #
 #----------------------------------------------------------------------------------#
-choice = dmenu.show(names, prompt='select anime')
+goto = True
+while goto == True:
+	choice = dmenu.show(names[:20], prompt='select anime')
+	if choice not in names:
+		print("choice not in names")
+		exit()
+	openChoice = dmenu.show(["episode","image"], prompt='open')
+
+	if openChoice == "image":
+		n=0
+		imgs=[]
+		coverImages = str(links).split('src="/img')
+		coverImages.pop(0)
+		for index in coverImages:
+			img = str(coverImages[n]).split('"', 1)[0]
+			if img != last and choice in img:
+				last = img
+				imgs.append(img)
+			else:
+				print(img)
+			n+=1
+		image_url="animekisa.tv/img"+str(imgs[0])
+		image_url="https://"+image_url[:-4]
+		img_type=image_url[-4:]
+		img_data = requests.get(image_url).content
+		img_dir = "/home/l/Documents/global/web/anime/data/cover"+img_type
+		with open(img_dir, 'wb') as handler:
+			handler.write(img_data)
+		os.system("xdg-open "+img_dir)
+		#webbrowser.open(image_url)
+	elif openChoice == "episode":
+		goto=False
+	else: 
+		exit()
+
 
 #----------------------------------------------------------------------------------#
 # SCAN                                                                             #
 #----------------------------------------------------------------------------------#
-## scan ? anime site for available anime episode
-url="https://?.?/"+str(choice)
+## scan anime kisa for available anime episode
+url="https://animekisa.tv/"+str(choice)
 html_content = requests.get(url).text
 animePage = BeautifulSoup(html_content, "lxml")
 links = animePage.find_all("div", {"class": "centerv"})
+
 episodes =  str(links).split('"')
 episode=[]
 
@@ -114,13 +179,12 @@ for index in episodes:
 # use dmenu here instead to select the episode
 selectedEpisode=episode[0]
 if episodeSelect == True:
-	#(menuSize,pagesIndex,less,more)
 	firstEpisode = 1
 	options=genList(int(episode[0]),firstEpisode,None,None)
 	selectedEpisode = dmenu.show(options, prompt='select episode')
 
-## scan ? anime site for download link
-url="https://?.?/"+str(choice)+"-episode-"+str(selectedEpisode)
+## scan anime kisa for download link
+url="https://animekisa.tv/"+str(choice)+"-episode-"+str(selectedEpisode)
 html_content = requests.get(url).text
 
 # Parse the html content
