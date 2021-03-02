@@ -8,6 +8,7 @@ import dmenu
 import sys
 import wget
 import datetime
+import lxml
 
 #----------------------------------------------------------------------------------#
 # ARGUMENTS                                                                        #
@@ -70,6 +71,11 @@ if pageSelect == True:
 #----------------------------------------------------------------------------------#
 ## scan anime kisa for new anime
 url="https://animekisa.tv/latest/"+str(page)
+
+if not os.path.isfile('data/date.txt'):
+	os.makedirs('data')
+	with open('data/date.txt', 'w') as fp: 
+	    pass
 
 #check if page alredy loaded
 if(page==0):
