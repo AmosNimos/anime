@@ -10,6 +10,8 @@ import wget
 import datetime
 import lxml
 
+home_user = "/home/plato"
+
 #----------------------------------------------------------------------------------#
 # ARGUMENTS                                                                        #
 #----------------------------------------------------------------------------------#
@@ -147,7 +149,7 @@ while goto == True:
 		image_url="https://"+image_url[:-4]
 		img_type=image_url[-4:]
 		img_data = requests.get(image_url).content
-		img_dir = "/home/l/Documents/global/web/anime/data/cover"+img_type
+		img_dir = home_user+"/Documents/web/anime/data/cover"+img_type
 		with open(img_dir, 'wb') as handler:
 			handler.write(img_data)
 		os.system("xdg-open "+img_dir)
