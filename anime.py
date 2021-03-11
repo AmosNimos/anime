@@ -1,5 +1,8 @@
 #!/usr/bin/env python3
 # importing the libraries
+
+# todo: make a search version with /search?q= choice = choice.replace(" ", "+")
+
 from bs4 import BeautifulSoup
 import requests
 import os
@@ -9,8 +12,11 @@ import sys
 import wget
 import datetime
 import lxml
+from pathlib import Path
 
 home_user = "/home/plato"
+source_path = Path(__file__).resolve()
+source_dir = source_path.parent
 
 #----------------------------------------------------------------------------------#
 # ARGUMENTS                                                                        #
@@ -18,6 +24,7 @@ home_user = "/home/plato"
 pageSelect=False
 episodeSelect=True;
 download=False;
+search=False
 if(len(sys.argv)>0):
 	for i in range(len(sys.argv)):
 		arg = str(sys.argv[i])
@@ -27,13 +34,17 @@ if(len(sys.argv)>0):
 			#auto select last episode
 			episodeSelect=False
 
-entry = dmenu.show(["Download","Stream"])
+entry = dmenu.show(["Download","Stream","Search"])
 if entry == "Download":
 	download=True
 elif entry == "Stream":
 	download=False
+elif entry == "Search":
+	search = True
 else:
 	exit()
+
+page=0
 #----------------------------------------------------------------------------------#
 # FUNCTIONS                                                                        #
 #----------------------------------------------------------------------------------#
@@ -50,73 +61,77 @@ def genList(size,start,befor,after):
 #----------------------------------------------------------------------------------#
 # Optional                                                                         #
 #----------------------------------------------------------------------------------#
-page=0
-if pageSelect == True:
-	pagesIndex=0
-	loop=True
-	menuSize=6
-	more=">"
-	less="<"
-	while loop==True:
-		options=genList(menuSize,pagesIndex,less,more)
-		choice = dmenu.show(options, prompt='select page')
-		if str(choice) == less:
-			pagesIndex-=menuSize
-		elif str(choice) == more:
-			pagesIndex+=menuSize
-		else: 
-			loop=False
-			page=int(choice)
+if search == False:
+	if pageSelect == True:
+		pagesIndex=0
+		loop=True
+		menuSize=6
+		more=">"
+		less="<"
+		while loop==True:
+			options=genList(menuSize,pagesIndex,less,more)
+			choice = dmenu.show(options, prompt='select page')
+			if str(choice) == less:
+				pagesIndex-=menuSize
+			elif str(choice) == more:
+				pagesIndex+=menuSize
+			else: 
+				loop=False
+				page=int(choice)
 
-#----------------------------------------------------------------------------------#
-# SCAN                                                                             #
-#----------------------------------------------------------------------------------#
-## scan anime kisa for new anime
-url="https://animekisa.tv/latest/"+str(page)
+	#----------------------------------------------------------------------------------#
+	# SCAN                                                                             #
+	#----------------------------------------------------------------------------------#
+	## scan anime kisa for new anime
+	url="https://animekisa.tv/latest/"+str(page)
 
-if not os.path.isfile('data/date.txt'):
-	os.makedirs('data')
-	with open('data/date.txt', 'w') as fp: 
-	    pass
+	if not os.path.isfile(str(source_dir)+'/data/date.txt'):
+		os.makedirs(str(source_dir)+'/data')
+		with open(str(source_dir)+'/data/date.txt', 'w') as fp: 
+		    pass
 
-#check if page alredy loaded
-if(page==0):
-	date = datetime.datetime.now()
-	now = date.strftime("%d")+'-'+date.strftime("%w")
-	html = open(os.path.join(sys.path[0], "data/date.txt"), "r")
-	lastDate = html.readline()
-	if lastDate != now:
-		html.close()
-		html = open(os.path.join(sys.path[0], "data/date.txt"), "w")
-		html.write(now)
-		html.close()
+	#check if page alredy loaded
+	if(page==0):
+		date = datetime.datetime.now()
+		now = date.strftime("%d")+'-'+date.strftime("%w")
+		html = open(os.path.join(sys.path[0], str(source_dir)+"/data/date.txt"), "r")
+		lastDate = html.readline()
+		if lastDate != now:
+			html.close()
+			html = open(os.path.join(sys.path[0], str(source_dir)+"/data/date.txt"), "w")
+			html.write(now)
+			html.close()
+			html_content = requests.get(url).text
+			html = open(os.path.join(sys.path[0], str(source_dir)+"/data/animekisa.html"), "w")
+			html.write(html_content)
+			html.close()
+		else:
+			html = open(os.path.join(sys.path[0], str(source_dir)+"/data/animekisa.html"), "r")
+			html_content=html.read()
+			html.close()
+	else :
 		html_content = requests.get(url).text
-		html = open(os.path.join(sys.path[0], "data/animekisa.html"), "w")
-		html.write(html_content)
-		html.close()
-	else:
-		html = open(os.path.join(sys.path[0], "data/animekisa.html"), "r")
-		html_content=html.read()
-		html.close()
-else :
-	html_content = requests.get(url).text
 
-frontPage = BeautifulSoup(html_content, "lxml")
-links = frontPage.find_all("a", {"class": "an"})
+	frontPage = BeautifulSoup(html_content, "lxml")
+	links = frontPage.find_all("a", {"class": "an"})
+else :
+	search = dmenu.show([], prompt='search:')
+	url="https://animekisa.tv/search?q="+search
+	html_content = requests.get(url).text
+	frontPage = BeautifulSoup(html_content, "lxml")
+	links = frontPage.find_all("a", {"class": "an"})
 animes = str(links).split('href="/')
 animes.pop(0)
 n=0
 nEpisode=0
 last=""
 names=[]
-
 #store anime name in a list
 for index in animes:
 	name = str(animes[n]).split('"', 1)[0]
-	if name != last and "episode-" not in name:
+	if name != last and "episode-" not in name and len(name)>2:
+		print(name)
 		last = name
-		#temporary until dmenu
-		#print(" "+str(nEpisode)+": "+name)
 		nEpisode+=1
 		names.append(name)
 	n+=1
@@ -189,26 +204,21 @@ selectedEpisode=episode[0]
 if episodeSelect == True:
 	firstEpisode = 1
 	options=genList(int(episode[0]),firstEpisode,None,None)
+	#options.append("all")
 	selectedEpisode = dmenu.show(options, prompt='select episode')
 
 ## scan anime kisa for download link
 url="https://animekisa.tv/"+str(choice)+"-episode-"+str(selectedEpisode)
 html_content = requests.get(url).text
-
 # Parse the html content
 soup = BeautifulSoup(html_content, "lxml")
 js = soup.find_all('script')
-
 index = 6
 VidStreaming = ""
 jss = str(js[index]).split(';')
 for lines in jss:
 	if "var VidStreaming = " in lines:
 		VidStreaming = str(lines).split('"')
-
-## scan download page for download
-# example "https://gogo-play.net/load.php?id=MTUyNTE4&title=Beastars+2nd+Season&typesub=SUB&sub=&cover=Y292ZXIvYmVhc3RhcnMtMm5kLXNlYXNvbi5wbmc="
-
 url=str(VidStreaming[1])
 if download==True:
 	##to download
@@ -241,23 +251,4 @@ if download==True:
 	if url == "":
 		print("no download available.")
 		exit()
-	#finalRes = str(finalRes)[:4]
-	#finalRes = str(finalRes)[-3:]
-	#videoName=str(choice)+'-episode-'+str(selectedEpisode)+'-'+finalRes+'p.mp4'
-	#videoFile='~/anime/'
-	#download_file(url,videoFile+videoName)
-	#print("downloading"+videoName+"please wait")
-	#myfile = requests.get(url)
-	#open(videoFile+videoName+'.mp4', 'wb').write(myfile.content)
-	#wget.download(url, videoFile+videoName+'.mp4')
-	# example https://gogo-play.net/download?id=MTUwMzA3&title=Tatoeba+Last+Dungeon+Mae+no+Mura+no+Shounen+ga+Joban+no+Machi+de+Kurasu+Youna+Monogatari&typesub=SUB
 webbrowser.open(str(url))
-
-## scan downlink for actual download link
-
-
-
-
-#rawj = soup.find_all('script')
-#rawj = rawj.split('var VidStreaming = ')
-#print(str(rawj))
