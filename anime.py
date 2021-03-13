@@ -37,7 +37,7 @@ if(len(sys.argv)>0):
 entry = dmenu.show(["New","Search"])
 if entry == "Search":
 	search = True
-elif entry == "New"
+elif entry == "New":
 	search = False
 else:
 	exit()
