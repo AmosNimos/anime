@@ -34,13 +34,19 @@ if(len(sys.argv)>0):
 			#auto select last episode
 			episodeSelect=False
 
-entry = dmenu.show(["Download","Stream","Search"])
+entry = dmenu.show(["New","Search"])
+if entry == "Search":
+	search = True
+elif entry == "New"
+	search = False
+else:
+	exit()
+
+entry = dmenu.show(["Download","Stream"])
 if entry == "Download":
 	download=True
 elif entry == "Stream":
 	download=False
-elif entry == "Search":
-	search = True
 else:
 	exit()
 
