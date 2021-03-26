@@ -14,7 +14,10 @@ import datetime
 import lxml
 from pathlib import Path
 
-home_user = "/home/plato"
+#replace "user" with your user name
+home_user = "/home/user"
+#replace with your favorit image viwer
+image_viewer = "feh"
 source_path = Path(__file__).resolve()
 source_dir = source_path.parent
 
@@ -97,27 +100,27 @@ if search == False:
 		    pass
 
 	#check if page alredy loaded
-	if(page==0):
-		date = datetime.datetime.now()
-		now = date.strftime("%d")+'-'+date.strftime("%w")
-		html = open(os.path.join(sys.path[0], str(source_dir)+"/data/date.txt"), "r")
-		lastDate = html.readline()
-		if lastDate != now:
-			html.close()
-			html = open(os.path.join(sys.path[0], str(source_dir)+"/data/date.txt"), "w")
-			html.write(now)
-			html.close()
-			html_content = requests.get(url).text
-			html = open(os.path.join(sys.path[0], str(source_dir)+"/data/animekisa.html"), "w")
-			html.write(html_content)
-			html.close()
-		else:
-			html = open(os.path.join(sys.path[0], str(source_dir)+"/data/animekisa.html"), "r")
-			html_content=html.read()
-			html.close()
-	else :
-		html_content = requests.get(url).text
-
+	# if(page==0):
+	# 	date = datetime.datetime.now()
+	# 	now = date.strftime("%d")+'-'+date.strftime("%w")
+	# 	html = open(os.path.join(sys.path[0], str(source_dir)+"/data/date.txt"), "r")
+	# 	lastDate = html.readline()
+	# 	if lastDate != now:
+	# 		html.close()
+	# 		html = open(os.path.join(sys.path[0], str(source_dir)+"/data/date.txt"), "w")
+	# 		html.write(now)
+	# 		html.close()
+	# 		html_content = requests.get(url).text
+	# 		html = open(os.path.join(sys.path[0], str(source_dir)+"/data/animekisa.html"), "w")
+	# 		html.write(html_content)
+	# 		html.close()
+	# 	else:
+	# 		html = open(os.path.join(sys.path[0], str(source_dir)+"/data/animekisa.html"), "r")
+	# 		html_content=html.read()
+	# 		html.close()
+	# else :
+	# 	html_content = requests.get(url).text
+	html_content = requests.get(url).text
 	frontPage = BeautifulSoup(html_content, "lxml")
 	links = frontPage.find_all("a", {"class": "an"})
 else :
@@ -173,7 +176,8 @@ while goto == True:
 		img_dir = home_user+"/Documents/web/anime/data/cover"+img_type
 		with open(img_dir, 'wb') as handler:
 			handler.write(img_data)
-		os.system("xdg-open "+img_dir)
+		#os.system("xdg-open "+img_dir)
+		os.system(image_viewer+" "+img_dir)
 		#webbrowser.open(image_url)
 	elif openChoice == "episode":
 		goto=False
